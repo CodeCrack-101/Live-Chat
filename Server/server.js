@@ -54,6 +54,12 @@ app.use('/api/messages', messagerouter);
 await connectdb(); // ✅ ensure this is inside an ES module (type: module)
 
 // Start the server
-server.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+if(process.env.NODE_ENV !== "production")
+{
+  server.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+  });
+}
+
+//export for vercel
+export default server;
