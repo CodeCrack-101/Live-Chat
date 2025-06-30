@@ -4,8 +4,11 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
 export const Authcontext = createContext();
+
+// ✅ Vite backend URL from Vercel environment
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 axios.defaults.baseURL = backendUrl;
+axios.defaults.withCredentials = true; // ✅ Important for cookies or secure auth
 
 export const Authprovider = ({ children }) => {
   const [token, settoken] = useState(localStorage.getItem("token"));
@@ -14,30 +17,51 @@ export const Authprovider = ({ children }) => {
   const [socket, setsocket] = useState(null);
 
   const checkauth = async () => {
+    if (!token) return;
+
     try {
-      const { data } = await axios.get("/api/auth/check");
+      const { data } = await axios.get("/api/auth/check", {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ Properly pass token in headers
+        },
+      });
+
       if (data.success) {
         setauthuser(data.user);
         connectsocket(data.user);
+        console.log("✅ Auth check passed");
+      } else {
+        throw new Error("Auth failed");
       }
     } catch (error) {
-      toast.error("Auth check failed");
+      console.error("❌ Auth check failed:", error.message);
+      logout();
+      toast.error("Session expired, please login again.");
     }
   };
 
   const login = async (type, payload) => {
     try {
-      const res = await axios.post(`${backendUrl}/api/auth/${type}`, payload);
+      const res = await axios.post(`/api/auth/${type}`, payload);
+
       if (res.data.success) {
-        setauthuser(res.data.userdata || res.data.user);
-        settoken(res.data.token);
-        localStorage.setItem("token", res.data.token);
+        const user = res.data.userdata || res.data.user;
+        const token = res.data.token;
+
+        setauthuser(user);
+        settoken(token);
+        localStorage.setItem("token", token);
+
+        toast.success("Login successful");
         return true;
       } else {
-        toast.error(res.data.message);
+        toast.error(res.data.message || "Login failed");
+        return false;
       }
     } catch (err) {
-      toast.error("Something went wrong");
+      console.error("❌ Login error:", err);
+      toast.error("Something went wrong during login");
+      return false;
     }
   };
 
@@ -46,14 +70,20 @@ export const Authprovider = ({ children }) => {
     settoken(null);
     setauthuser(null);
     setonlineuser([]);
-    delete axios.defaults.headers.common["token"];
+    delete axios.defaults.headers.common["Authorization"];
     socket?.disconnect();
+    setsocket(null);
     toast.success("Logged out successfully");
   };
 
   const updateProfile = async (body) => {
     try {
-      const { data } = await axios.put("/api/auth/updateprofile", body);
+      const { data } = await axios.put("/api/auth/updateprofile", body, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       if (data.success) {
         setauthuser(data.user);
         toast.success("Profile updated successfully");
@@ -68,15 +98,15 @@ export const Authprovider = ({ children }) => {
 
     const newsocket = io(backendUrl, {
       query: { userId: userdata._id },
+      transports: ["websocket"], // 👈 Helps prevent polling fallback
     });
 
     newsocket.connect();
     setsocket(newsocket);
 
-    // ✅ Fix this event listener
     newsocket.on("Get Online User", (userids) => {
       if (Array.isArray(userids)) {
-        setonlineuser(userids.map(id => id.toString()));
+        setonlineuser(userids.map((id) => id.toString()));
       } else {
         setonlineuser([]);
       }
@@ -85,7 +115,6 @@ export const Authprovider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      axios.defaults.headers.common["token"] = token;
       checkauth();
     }
   }, [token]);
