@@ -24,7 +24,7 @@ app.use(express.json({ limit: "4mb" }));
 // ✅ Socket.io CORS must also match frontend origin (not "*")
 export const io = new Server(server, {
   cors: {
-    origin: CLIENT_ORIGIN,
+    origin: "https://your-frontend-url.vercel.app",
     credentials: true
   }
 });
