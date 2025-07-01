@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import assets from '../assets/assets';
 import { Authcontext } from '../../Context/Authcontext';
-import { Navigate } from 'react-router-dom';
+// import { Navigate } from 'react-router-dom';
 const Loginpage = () => {
   const [currentState, setCurrentState] = useState('Sign up');
   const [fullname, setFullname] = useState('');
@@ -19,7 +19,7 @@ const Loginpage = () => {
   useEffect(() => {
     console.log("🚀 authuser changed in Loginpage", authuser); // ✅ Add this
     if (authuser) {
-      Navigate("/");
+      navigate("/");
     }
   }, [authuser, navigate]);
   

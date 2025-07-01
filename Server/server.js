@@ -11,10 +11,21 @@ const app = express();
 const server = http.createServer(app);
 const port = process.env.PORT || 5000;
 
-// Initialize socket server
-export const io = new Server(server, {  // ✅ FIX: use 'server', not 'Server'
+// ✅ CORS: Must match frontend when using credentials
+const CLIENT_ORIGIN = "http://localhost:5173";
+
+// Middleware
+app.use(cors({
+  origin: CLIENT_ORIGIN,
+  credentials: true
+}));
+app.use(express.json({ limit: "4mb" }));
+
+// ✅ Socket.io CORS must also match frontend origin (not "*")
+export const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: CLIENT_ORIGIN,
+    credentials: true
   }
 });
 
@@ -38,11 +49,6 @@ io.on("connection", (socket) => {
   });
 });
 
-
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: "4mb" }));
-
 // Routes
 app.use('/api/status', (req, res) => {
   res.send("server is live");
@@ -50,16 +56,15 @@ app.use('/api/status', (req, res) => {
 app.use('/api/auth', userrouter);
 app.use('/api/messages', messagerouter);
 
-// Database
-await connectdb(); // ✅ ensure this is inside an ES module (type: module)
+// Connect DB
+await connectdb();
 
 // Start the server
-if(process.env.NODE_ENV !== "production")
-{
+if (process.env.NODE_ENV !== "production") {
   server.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+    console.log(`🚀 Server running at http://localhost:${port}`);
   });
 }
 
-//export for vercel
+// For Vercel export
 export default server;

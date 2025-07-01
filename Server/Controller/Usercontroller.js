@@ -2,7 +2,7 @@
 
 import bcrypt from 'bcryptjs';
 import User from '../Models/Usermodel.js';
-import { generatetoekn } from '../LIb/Utils.js';
+import { generatetoken } from '../LIb/Utils.js';
 import cloudinary from '../LIb/Cloudnary.js';
 
 // Signup User
@@ -35,7 +35,7 @@ export const signup = async (req, res) => {
 });
 
 
-        const token = generatetoekn(newUser._id);
+        const token = generatetoken(newUser._id);
         newUser.save();
 
         return res.json({
@@ -75,7 +75,7 @@ export const login = async (req, res) => {
             });
         }
 
-        const token = generatetoekn(userdata._id);
+const token = generatetoken(userdata._id); // ✅ use this instead of generatetoken
         return res.json({
             success: true,
             userdata,
