@@ -12,7 +12,7 @@ const server = http.createServer(app);
 const port = process.env.PORT || 5000;
 
 // ✅ CORS: Must match frontend when using credentials
-const CLIENT_ORIGIN = "http://localhost:5173";
+const CLIENT_ORIGIN = "http://localhost:5174";
 
 // Middleware
 app.use(cors({
@@ -24,10 +24,16 @@ app.use(express.json({ limit: "4mb" }));
 // ✅ Socket.io CORS must also match frontend origin (not "*")
 export const io = new Server(server, {
   cors: {
-    origin: "https://your-frontend-url.vercel.app",
+    origin: CLIENT_ORIGIN,
     credentials: true
   }
 });
+
+app.get("/", (req, res) => {
+  res.send("server IS Running");
+});
+
+
 
 // Store online users
 export const usersockitmap = {};
@@ -35,7 +41,7 @@ export const usersockitmap = {};
 // Connect to socket.io
 io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
-  console.log("🔌 User Connected:", userId);
+  console.log(" User Connected:", userId);
 
   if (userId) {
     usersockitmap[userId] = socket.id;
@@ -43,7 +49,7 @@ io.on("connection", (socket) => {
   }
 
   socket.on("disconnect", () => {
-    console.log("❌ User Disconnected:", userId);
+    console.log("User Disconnected:", userId);
     delete usersockitmap[userId];
     io.emit("Get Online User", Object.keys(usersockitmap));
   });
