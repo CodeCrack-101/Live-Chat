@@ -17,7 +17,7 @@ const allowedOrigins = [
   "https://live-chat-eosin-rho.vercel.app"        // deployed frontend
 ];
 
-// ✅ Express CORS middleware
+// ✅ Express CORS middleware (must be first)
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -28,8 +28,13 @@ app.use(
       }
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// ✅ Explicitly handle preflight requests
+app.options("*", cors());
 
 app.use(express.json({ limit: "4mb" }));
 
@@ -38,6 +43,7 @@ export const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
     credentials: true,
+    methods: ["GET", "POST"],
   },
 });
 
