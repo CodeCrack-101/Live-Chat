@@ -11,34 +11,45 @@ const app = express();
 const server = http.createServer(app);
 const port = process.env.PORT || 5000;
 
-// ✅ CORS: Must match frontend when using credentials
-const CLIENT_ORIGIN = "http://localhost:5174";
+// ✅ Allowed frontend origins (local + production)
+const allowedOrigins = [
+  "http://localhost:5174",                        // local frontend
+  "https://live-chat-eosin-rho.vercel.app"        // deployed frontend
+];
 
-// Middleware
-app.use(cors({
-  origin: CLIENT_ORIGIN,
-  credentials: true
-}));
+// ✅ Express CORS middleware
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json({ limit: "4mb" }));
 
-// ✅ Socket.io CORS must also match frontend origin (not "*")
+// ✅ Socket.io CORS config
 export const io = new Server(server, {
   cors: {
-    origin: CLIENT_ORIGIN,
-    credentials: true
-  }
+    origin: allowedOrigins,
+    credentials: true,
+  },
 });
 
+// Default route
 app.get("/", (req, res) => {
-  res.send("server IS Running");
+  res.send("Server is running ✅");
 });
-
-
 
 // Store online users
 export const usersockitmap = {};
 
-// Connect to socket.io
+// Socket.io events
 io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
   console.log(" User Connected:", userId);
@@ -56,21 +67,21 @@ io.on("connection", (socket) => {
 });
 
 // Routes
-app.use('/api/status', (req, res) => {
+app.use("/api/status", (req, res) => {
   res.send("server is live");
 });
-app.use('/api/auth', userrouter);
-app.use('/api/messages', messagerouter);
+app.use("/api/auth", userrouter);
+app.use("/api/messages", messagerouter);
 
 // Connect DB
 await connectdb();
 
-// Start the server
+// Start server locally (not on Vercel)
 if (process.env.NODE_ENV !== "production") {
   server.listen(port, () => {
     console.log(`🚀 Server running at http://localhost:${port}`);
   });
 }
 
-// For Vercel export
+// ✅ For Vercel export
 export default server;
