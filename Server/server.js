@@ -80,7 +80,7 @@ app.use("/api/auth", userrouter);
 app.use("/api/messages", messagerouter);
 
 // Connect DB
-await connectdb();
+connectdb().then(() => console.log("✅ DB connected")).catch(err => console.error("❌ DB error", err));
 
 // Start server locally (not on Vercel)
 if (process.env.NODE_ENV !== "production") {
