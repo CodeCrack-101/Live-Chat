@@ -55,14 +55,13 @@ const Chat = () => {
   }, [selectedUser]);
 
   return (
-    <div className="h-full flex relative">
-
+    <div
+      className={`h-full flex relative ${
+        !selectedUser ? "max-md:hidden" : ""
+      }`}
+    >
       {/* CHAT AREA */}
-      <div
-        className={`flex-1 flex flex-col px-4 py-3 ${
-          !selectedUser ? "max-md:hidden" : ""
-        }`}
-      >
+      <div className="flex-1 flex flex-col px-4 py-3">
 
         {/* HEADER */}
         <div className="flex justify-between items-center border-b pb-3">
@@ -84,7 +83,7 @@ const Chat = () => {
             </div>
           </div>
 
-          {/* 🔥 BACK BUTTON FIXED */}
+          {/* BACK BUTTON */}
           <img
             src={assets.arrow_icon}
             className="md:hidden w-5 cursor-pointer"
@@ -126,7 +125,7 @@ const Chat = () => {
         </div>
 
         {/* INPUT */}
-        <div className="flex items-center gap-5 p-5 py-10">
+        <div className="flex items-center gap-3 p-3">
 
           <div className="flex-1 flex items-center px-4 py-2 rounded-full 
                           bg-white/5 backdrop-blur-md border border-gray-700">
