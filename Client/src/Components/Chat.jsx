@@ -63,30 +63,34 @@ const Chat = () => {
       {/* CHAT AREA */}
       <div className="flex-1 flex flex-col px-4 py-3">
 
-        {/* HEADER */}
-        <div className="flex justify-between items-center border-b pb-3">
+        {/* ✅ FIXED HEADER */}
+        <div className="flex items-center justify-between border-b pb-3">
+
+          {/* LEFT SIDE */}
           <div
             className="flex items-center gap-3 cursor-pointer"
             onClick={() => setIsChatbarOpen(true)}
           >
             <img
               src={selectedUser?.profilePic || assets.avatar_icon}
-              className="w-10 h-10 rounded-full"
+              className="w-10 h-10 rounded-full object-cover"
             />
-            <div>
-              <p className="text-white">
+
+            <div className="flex flex-col justify-center leading-tight">
+              <p className="text-white text-sm font-medium">
                 {selectedUser?.fullName}
               </p>
+
               <span className="text-xs text-gray-400">
                 {isOnline ? "Online" : "Offline"}
               </span>
             </div>
           </div>
 
-          {/* BACK BUTTON */}
+          {/* RIGHT SIDE (BACK BUTTON) */}
           <img
             src={assets.arrow_icon}
-            className="md:hidden w-5 cursor-pointer"
+            className="md:hidden w-5 h-5 cursor-pointer opacity-70 hover:opacity-100"
             onClick={() => setSelectedUser(null)}
           />
         </div>
