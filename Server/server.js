@@ -59,7 +59,6 @@ app.use('/api/messages', messagerouter);
 // Connect DB
 await connectdb();
 
-// Start the server
 if (process.env.NODE_ENV !== "production") {
   server.listen(port, () => {
     console.log(`🚀 Server running at http://localhost:${port}`);
