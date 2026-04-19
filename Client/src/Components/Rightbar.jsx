@@ -6,10 +6,18 @@ import { Chatcontext } from "../../Context/Chatcontext";
 
 const Rightbar = () => {
   const [input, setInput] = useState("");
+  const [openMenu, setOpenMenu] = useState(false); // ✅ NEW
+
   const navigate = useNavigate();
 
-  const { getUsers, users, selectedUser, setSelectedUser, unseenMessages, setunseenmessages } =
-    useContext(Chatcontext);
+  const {
+    getUsers,
+    users,
+    selectedUser,
+    setSelectedUser,
+    unseenMessages,
+    setunseenmessages,
+  } = useContext(Chatcontext);
 
   const { logout, onlineuser } = useContext(Authcontext);
 
@@ -24,20 +32,54 @@ const Rightbar = () => {
     : users || [];
 
   return (
-    <div className={`bg-[#8185B2]/10 h-full overflow-hidden p-5 text-white relative ${selectedUser ? "max-md:hidden" : ""}`}>
+    <div
+      className={`bg-[#8185B2]/10 h-full overflow-hidden p-5 text-white relative ${
+        selectedUser ? "max-md:hidden" : ""
+      }`}
+    >
       <div className="pb-5">
         <div className="flex justify-between items-center">
           <img src={assets.logo} alt="QuickChat" className="max-w-32" />
-          <div className="relative group">
-            <img src={assets.menu_icon} alt="Menu" className="w-6 h-6 cursor-pointer" />
-            <div className="absolute top-full right-0 z-20 w-32 mt-2 p-3 rounded-md bg-[#282142] border border-gray-600 text-sm text-white hidden group-hover:block">
-              <p onClick={() => navigate("/profile")} className="cursor-pointer hover:text-gray-300">Edit Profile</p>
-              <hr className="my-2 border-gray-600" />
-              <p onClick={() => { logout(); navigate("/login"); }} className="cursor-pointer hover:text-gray-300">Logout</p>
-            </div>
+
+          {/* ✅ FIXED MENU */}
+          <div className="relative">
+            <img
+              src={assets.menu_icon}
+              alt="Menu"
+              className="w-6 h-6 cursor-pointer"
+              onClick={() => setOpenMenu((prev) => !prev)}
+            />
+
+            {openMenu && (
+              <div className="absolute top-full right-0 z-20 w-32 mt-2 p-3 rounded-md bg-[#282142] border border-gray-600 text-sm text-white">
+                <p
+                  onClick={() => {
+                    navigate("/profile");
+                    setOpenMenu(false);
+                  }}
+                  className="cursor-pointer hover:text-gray-300"
+                >
+                  Edit Profile
+                </p>
+
+                <hr className="my-2 border-gray-600" />
+
+                <p
+                  onClick={() => {
+                    logout();
+                    navigate("/login");
+                    setOpenMenu(false);
+                  }}
+                  className="cursor-pointer hover:text-gray-300"
+                >
+                  Logout
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
+        {/* SEARCH */}
         <div className="bg-[#282142] rounded-full flex items-center gap-2 py-3 px-4 mt-5">
           <img src={assets.search_icon} className="w-3" alt="Search" />
           <input
@@ -50,18 +92,27 @@ const Rightbar = () => {
         </div>
       </div>
 
+      {/* USERS */}
       <div className="mt-4 flex flex-col gap-2 overflow-y-auto max-h-[70vh] pr-1">
         {filteredUsers.map((user) => {
-          const isOnline = onlineuser.map(String).includes(user._id?.toString());
+          const isOnline = onlineuser
+            .map(String)
+            .includes(user._id?.toString());
+
           return (
             <div
               key={user._id}
               onClick={() => {
                 setSelectedUser(user);
-                setunseenmessages((prev) => ({ ...prev, [user._id]: 0 }));
+                setunseenmessages((prev) => ({
+                  ...prev,
+                  [user._id]: 0,
+                }));
               }}
               className={`relative flex items-center gap-2 p-2 pl-4 rounded cursor-pointer max-sm:text-sm transition-all ${
-                selectedUser?._id === user._id ? "bg-[#282142]/50" : ""
+                selectedUser?._id === user._id
+                  ? "bg-[#282142]/50"
+                  : ""
               }`}
             >
               <img
@@ -69,9 +120,14 @@ const Rightbar = () => {
                 alt="User"
                 className="w-[35px] aspect-[1/1] rounded-full"
               />
+
               <div className="flex flex-col leading-5">
                 <p>{user.fullname}</p>
-                <span className={`text-xs ${isOnline ? "text-green-400" : "text-neutral-400"}`}>
+                <span
+                  className={`text-xs ${
+                    isOnline ? "text-green-400" : "text-neutral-400"
+                  }`}
+                >
                   {isOnline ? "Online" : "Offline"}
                 </span>
               </div>
