@@ -125,7 +125,7 @@ const Chat = () => {
         </div>
 
         {/* INPUT */}
-        <div className="flex items-center gap-3 p-3">
+        <div className="flex items-center gap-3 p-3 py-12">
 
           <div className="flex-1 flex items-center px-4 py-2 rounded-full 
                           bg-white/5 backdrop-blur-md border border-gray-700">
