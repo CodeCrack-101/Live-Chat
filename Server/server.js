@@ -1,53 +1,82 @@
-import express from 'express';
+import express from "express";
 import "dotenv/config";
-import cors from 'cors';
-import { connectdb } from './LIb/DB.js';
-import http from 'http';
-import userrouter from './Routes/Userroute.js';
-import messagerouter from './Routes/messageroute.js';
-import { Server } from 'socket.io';
+import cors from "cors";
+import http from "http";
+import { Server } from "socket.io";
+
+import { connectdb } from "./LIb/DB.js";
+import userrouter from "./Routes/Userroute.js";
+import messagerouter from "./Routes/messageroute.js";
 
 const app = express();
 const server = http.createServer(app);
 
-const port = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(express.json({ limit: "4mb" }));
 
+// ✅ Allowed origins (ADD YOUR VERCEL URL HERE)
 const allowedOrigins = [
-  "http://localhost:5173",   // ✅ ADD THIS
+  "http://localhost:5173",
   "http://localhost:5174",
-  "https://live-chat-eosin-rho.vercel.app"
+  "https://live-chat-two-psi.vercel.app"
 ];
 
+
+// =======================
+// ✅ MIDDLEWARE (ORDER MATTERS)
+// =======================
+
+// CORS FIRST
 app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed"));
+    }
+  },
+  credentials: true,
+}));
+
+// Handle preflight properly
+app.options("*", cors({
   origin: allowedOrigins,
   credentials: true
 }));
 
-// Socket
-export const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    credentials: true,
-  },
-});
+// Body parsers
+app.use(express.json({ limit: "4mb" }));
+app.use(express.urlencoded({ extended: true }));
 
-// Default
+
+// =======================
+// ✅ ROUTES
+// =======================
+
 app.get("/", (req, res) => {
   res.send("Server running ✅");
 });
 
-// Routes
 app.use("/api/auth", userrouter);
 app.use("/api/messages", messagerouter);
 
-// Users map
+
+// =======================
+// ✅ SOCKET.IO (FIXED)
+// =======================
+
+export const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
 export const usersockitmap = {};
 
 io.on("connection", (socket) => {
-  const userId = socket.handshake.query.userId || null;
+  const userId = socket.handshake.query.userId;
 
   if (userId) {
     usersockitmap[userId] = socket.id;
@@ -55,19 +84,25 @@ io.on("connection", (socket) => {
   }
 
   socket.on("disconnect", () => {
-    delete usersockitmap[userId];
-    io.emit("Get Online User", Object.keys(usersockitmap));
+    if (userId) {
+      delete usersockitmap[userId];
+      io.emit("Get Online User", Object.keys(usersockitmap));
+    }
   });
 });
 
-// DB + Server
+
+// =======================
+// ✅ DB + SERVER START
+// =======================
+
 connectdb()
   .then(() => {
     console.log("✅ DB Connected");
-    server.listen(port, () => {
-      console.log(`🚀 Server running on ${port}`);
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
     });
   })
-  .catch(err => console.log(err));
+  .catch((err) => console.log("DB Error:", err));
 
 export default server;
