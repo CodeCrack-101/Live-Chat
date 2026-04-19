@@ -53,7 +53,7 @@ export const Authprovider = ({ children }) => {
       const res = await axios.post(`/api/auth/${type}`, payload);
 
       if (res.data.success) {
-        const user = res.data.userdata || res.data.user; // handle both keys
+        const user = res.data.userdata; // handle both keys
         const newToken = res.data.token;
 
         setauthuser(user);

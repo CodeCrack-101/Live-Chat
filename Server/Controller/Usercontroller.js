@@ -28,12 +28,12 @@ export const signup = async (req, res) => {
 
     const token = generatetoken(newUser._id);
 
-    res.json({
-      success: true,
-      userdata: newUser,
-      token,
-      message: "Account created"
-    });
+        return res.json({
+            success: true,
+            userdata: newUser,
+            message: "Account created successfully",
+            token
+        });
 
   } catch (error) {
     console.log("Signup Error:", error.message);
@@ -56,14 +56,13 @@ export const login = async (req, res) => {
       return res.json({ success: false, message: "Invalid password" });
     }
 
-    const token = generatetoken(user._id);
-
-    res.json({
-      success: true,
-      userdata: user,
-      token,
-      message: "Login successful"
-    });
+const token = generatetoken(userdata._id); // ✅ use this instead of generatetoken
+        return res.json({
+            success: true,
+            userdata,
+            message: "Logged in successfully",
+            token
+        });
 
   } catch (error) {
     console.log("Login Error:", error.message);

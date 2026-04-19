@@ -11,31 +11,54 @@ const app = express();
 const server = http.createServer(app);
 const port = process.env.PORT || 5000;
 
-// ✅ CORS: Must match frontend when using credentials
-const CLIENT_ORIGIN = "http://localhost:5173";
+// ✅ Allowed frontend origins (local + production)
+const allowedOrigins = [
+  "http://localhost:5174",                        // local frontend
+  "https://live-chat-eosin-rho.vercel.app"        // deployed frontend
+];
 
-// Middleware
-app.use(cors({
-  origin: CLIENT_ORIGIN,
-  credentials: true
-}));
+// ✅ Express CORS middleware (must be first)
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// ✅ Explicitly handle preflight requests
+app.options("*", cors());
+
 app.use(express.json({ limit: "4mb" }));
 
-// ✅ Socket.io CORS must also match frontend origin (not "*")
+// ✅ Socket.io CORS config
 export const io = new Server(server, {
   cors: {
-    origin: CLIENT_ORIGIN,
-    credentials: true
-  }
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST"],
+  },
+});
+
+// Default route
+app.get("/", (req, res) => {
+  res.send("Server is running ✅");
 });
 
 // Store online users
 export const usersockitmap = {};
 
-// Connect to socket.io
+// Socket.io events
 io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
-  console.log("🔌 User Connected:", userId);
+  console.log(" User Connected:", userId);
 
   if (userId) {
     usersockitmap[userId] = socket.id;
@@ -43,27 +66,28 @@ io.on("connection", (socket) => {
   }
 
   socket.on("disconnect", () => {
-    console.log("❌ User Disconnected:", userId);
+    console.log("User Disconnected:", userId);
     delete usersockitmap[userId];
     io.emit("Get Online User", Object.keys(usersockitmap));
   });
 });
 
 // Routes
-app.use('/api/status', (req, res) => {
+app.use("/api/status", (req, res) => {
   res.send("server is live");
 });
-app.use('/api/auth', userrouter);
-app.use('/api/messages', messagerouter);
+app.use("/api/auth", userrouter);
+app.use("/api/messages", messagerouter);
 
 // Connect DB
-await connectdb();
+connectdb().then(() => console.log("✅ DB connected")).catch(err => console.error("❌ DB error", err));
 
+// Start the server
 if (process.env.NODE_ENV !== "production") {
   server.listen(port, () => {
     console.log(`🚀 Server running at http://localhost:${port}`);
   });
 }
 
-// For Vercel export
+// ✅ For Vercel export
 export default server;
