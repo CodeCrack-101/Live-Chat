@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { Authcontext } from "./Authcontext";
 import toast from "react-hot-toast";
 
-export const Chatcontext = createContext(); // ✅ Capitalized export
+export const Chatcontext = createContext();
 
 export const Chatprovider = ({ children }) => {
   const [messages, setMessages] = useState([]);
@@ -13,22 +13,25 @@ export const Chatprovider = ({ children }) => {
 
   const { socket, axios } = useContext(Authcontext);
 
+  // ✅ GET USERS
   const getUsers = async () => {
     try {
       const { data } = await axios.get("/api/messages/users");
       if (data.success) {
         setUsers(data.users);
-        setUnseenMessages(data.unseenmessage);
+        setUnseenMessages(data.unseenmessage || {});
       }
     } catch (error) {
       toast.error(error.message);
     }
   };
 
-  const getMessages = async () => {
-    if (!selectedUser?._id) return;
+  // ✅ GET MESSAGES (FIXED)
+  const getMessages = async (userId) => {
+    if (!userId) return;
+
     try {
-      const { data } = await axios.get(`/api/messages/${selectedUser._id}`);
+      const { data } = await axios.get(`/api/messages/${userId}`);
       if (data.success) {
         setMessages(data.message);
       }
@@ -37,12 +40,14 @@ export const Chatprovider = ({ children }) => {
     }
   };
 
+  // ✅ SEND MESSAGE
   const sendMessage = async (messageData) => {
     try {
       const { data } = await axios.post(
         `/api/messages/send/${selectedUser._id}`,
         messageData
       );
+
       if (data.success) {
         setMessages((prev) => [...prev, data.newmessage]);
       } else {
@@ -53,6 +58,7 @@ export const Chatprovider = ({ children }) => {
     }
   };
 
+  // ✅ SOCKET LISTENER
   useEffect(() => {
     if (!socket) return;
 
@@ -60,6 +66,7 @@ export const Chatprovider = ({ children }) => {
       if (selectedUser && newMessage.senderId === selectedUser._id) {
         newMessage.seen = true;
         setMessages((prev) => [...prev, newMessage]);
+
         axios.put(`/api/messages/mark/${newMessage._id}`);
       } else {
         setUnseenMessages((prev) => ({
@@ -72,8 +79,16 @@ export const Chatprovider = ({ children }) => {
     };
 
     socket.on("newMessage", handleNewMessage);
+
     return () => socket.off("newMessage", handleNewMessage);
   }, [socket, selectedUser]);
+
+  // ✅ RESET WHEN USER CLOSED (IMPORTANT)
+  useEffect(() => {
+    if (!selectedUser) {
+      setMessages([]); // clear chat when back pressed
+    }
+  }, [selectedUser]);
 
   return (
     <Chatcontext.Provider
@@ -83,6 +98,7 @@ export const Chatprovider = ({ children }) => {
         selectedUser,
         setSelectedUser,
         unseenMessages,
+        setUnseenMessages, // ✅ FIXED (you missed this earlier)
         getUsers,
         getMessages,
         sendMessage,
